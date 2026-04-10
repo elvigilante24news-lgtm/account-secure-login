@@ -18,6 +18,12 @@ export function RegisterScreen({ onBack, onSuccess, onLogin }: RegisterScreenPro
   const [showVerificationScreen, setShowVerificationScreen] = useState(false);
   const [error, setError] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
+  const [verifyError, setVerifyError] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
@@ -30,6 +36,15 @@ export function RegisterScreen({ onBack, onSuccess, onLogin }: RegisterScreenPro
   });
   
   const register = useStore(state => state.register);
+  const login = useStore(state => state.login);
+
+  // Cooldown timer for resend
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
