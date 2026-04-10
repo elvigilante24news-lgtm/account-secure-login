@@ -1,42 +1,180 @@
+/* Estilos específicos de la aplicación */
+
+/* Asegurar que la app ocupe toda la pantalla en móvil */
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Animaciones de transición entre pantallas */
+.screen-transition-enter {
+  opacity: 0;
+  transform: translateX(20px);
 }
 
-@keyframes logo-spin {
+.screen-transition-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.screen-transition-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.screen-transition-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Efectos de hover mejorados */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(72, 61, 58, 0.2);
+}
+
+/* Animación de pulso para badges */
+@keyframes pulse-badge {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.pulse-badge {
+  animation: pulse-badge 2s ease-in-out infinite;
+}
+
+/* Efecto de brillo */
+.shine-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.shine-effect::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: rgba(252, 239, 3, 0.2);
+  transform: rotate(30deg);
+  animation: shine 3s infinite;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) rotate(30deg);
+  }
+  100% {
+    transform: translateX(100%) rotate(30deg);
+  }
+}
+
+/* Scrollbar personalizada */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Efecto de glassmorphism mejorado */
+.glass {
+  background: rgba(232, 228, 219, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(252, 239, 3, 0.3);
+}
+
+/* Animación de entrada suave */
+.fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(20px);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+/* Efecto de escala al presionar */
+.press-effect {
+  transition: transform 0.1s ease;
 }
 
-.card {
-  padding: 2em;
+.press-effect:active {
+  transform: scale(0.98);
 }
 
-.read-the-docs {
-  color: #888;
+/* Gradiente de texto - ahora color sólido */
+.text-pollo-marron-gold {
+  color: #483d3a;
+}
+
+/* Sombra de texto */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Efecto de borde animado - ahora color sólido */
+.animated-border {
+  position: relative;
+  border: 2px solid #fcef03;
+}
+
+/* Estilos para inputs en iOS */
+input, textarea {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Prevenir selección de texto en elementos interactivos */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Efecto de onda al hacer click */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(252, 239, 3, 0.3) 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.5s;
+}
+
+.ripple:active::after {
+  transform: scale(0, 0);
+  opacity: 0.3;
+  transition: 0s;
 }
