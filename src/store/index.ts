@@ -394,11 +394,8 @@ export const useStore = create<AppState>()(
         usuarios.push({ ...newUser, password: userData.password });
         localStorage.setItem('hiperdelpollo-users', JSON.stringify(usuarios));
         
-        set({ 
-          user: newUser, 
-          isAuthenticated: true, 
-          esAdmin: false 
-        });
+        // No autenticar aún - esperar verificación del código
+        // set({ user: newUser, isAuthenticated: true, esAdmin: false });
         
         return true;
       },
