@@ -184,40 +184,91 @@ export function RegisterScreen({ onBack, onSuccess, onLogin }: RegisterScreenPro
     setVerifyError('');
     inputRefs.current[0]?.focus();
   };
+
+  if (showVerificationScreen) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center px-6 relative">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-pollo-marron/10 rounded-full blur-3xl" />
           <div className="absolute bottom-20 -left-20 w-56 h-56 bg-pollo-marron/20 rounded-full blur-3xl" />
         </div>
-        <div className="relative z-10 text-center max-w-sm mx-auto">
-          <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center mb-6 animate-bounce">
-            <MailCheck className="w-10 h-10 text-green-600" />
+        <div className="relative z-10 text-center max-w-sm mx-auto w-full">
+          <div className="w-20 h-20 mx-auto bg-pollo-amarillo/20 rounded-full flex items-center justify-center mb-6">
+            <MailCheck className="w-10 h-10 text-pollo-marron" />
           </div>
           <h1 className="text-2xl font-black text-pollo-marron mb-3">
-            ¡Verificá tu correo!
+            Verificá tu cuenta
           </h1>
-          <p className="text-pollo-marron/70 mb-2">
-            Te enviamos un email de verificación a:
+          <p className="text-pollo-marron/70 mb-1">
+            Ingresá el código de 6 dígitos que enviamos a:
           </p>
           <p className="font-bold text-pollo-marron mb-6">
             {formData.email}
           </p>
-          <p className="text-sm text-pollo-marron/60 mb-8">
-            Revisá tu bandeja de entrada (y spam) y hacé clic en el enlace para activar tu cuenta.
+
+          {verifyError && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm text-center mb-4">
+              {verifyError}
+            </div>
+          )}
+
+          {/* OTP Input */}
+          <div className="flex justify-center gap-2 mb-6" onPaste={handleCodePaste}>
+            {verificationCode.map((digit, index) => (
+              <input
+                key={index}
+                ref={(el) => { inputRefs.current[index] = el; }}
+                type="text"
+                inputMode="numeric"
+                maxLength={1}
+                value={digit}
+                onChange={(e) => handleCodeChange(index, e.target.value)}
+                onKeyDown={(e) => handleCodeKeyDown(index, e)}
+                disabled={isVerifying}
+                className="w-12 h-14 text-center text-xl font-bold rounded-xl border-2 transition-all duration-300 outline-none disabled:opacity-50"
+                style={{
+                  backgroundColor: '#f0ece3',
+                  borderColor: digit ? '#fcef03' : 'rgba(72, 61, 58, 0.3)',
+                  color: '#483d3a',
+                  boxShadow: digit ? '0 0 0 3px rgba(252, 239, 3, 0.25)' : 'none',
+                }}
+                autoFocus={index === 0}
+              />
+            ))}
+          </div>
+
+          {isVerifying && (
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <div className="w-5 h-5 border-2 border-pollo-marron/30 border-t-pollo-marron rounded-full animate-spin" />
+              <span className="text-sm text-pollo-marron/70">Verificando código...</span>
+            </div>
+          )}
+
+          <button
+            onClick={() => {
+              const code = verificationCode.join('');
+              if (code.length === 6) handleVerify(code);
+            }}
+            disabled={verificationCode.join('').length !== 6 || isVerifying}
+            className="w-full btn-primary text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed mb-4"
+          >
+            Verificar y Acceder
+          </button>
+
+          <div className="flex items-center justify-center gap-2">
+            <button
+              onClick={handleResendCode}
+              disabled={resendCooldown > 0}
+              className="text-pollo-marron/60 hover:text-pollo-marron font-semibold text-sm flex items-center gap-1 disabled:opacity-50"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              {resendCooldown > 0 ? `Reenviar en ${resendCooldown}s` : 'Reenviar código'}
+            </button>
+          </div>
+
+          <p className="text-xs text-pollo-marron/40 mt-6">
+            Revisá tu bandeja de entrada y la carpeta de spam
           </p>
-          <button
-            onClick={onSuccess}
-            className="w-full btn-primary text-lg py-4"
-          >
-            Entendido, ir al inicio
-          </button>
-          <button
-            onClick={onLogin}
-            className="mt-4 text-pollo-marron/60 hover:text-pollo-marron font-semibold text-sm"
-          >
-            Ir a Iniciar Sesión
-          </button>
         </div>
       </div>
     );
