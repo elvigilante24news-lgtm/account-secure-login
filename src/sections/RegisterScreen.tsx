@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Eye, EyeOff, ArrowLeft, Mail, Lock, User, Phone, Calendar, MapPin, CreditCard, Check, Sparkles, MailCheck } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { Eye, EyeOff, ArrowLeft, Mail, Lock, User, Phone, Calendar, MapPin, CreditCard, Check, Sparkles, MailCheck, RefreshCw } from 'lucide-react';
 import { DateWheelPicker } from '@/components/DateWheelPicker';
 import { useStore } from '@/store';
 
