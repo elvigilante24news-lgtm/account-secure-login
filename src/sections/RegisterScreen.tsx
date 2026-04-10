@@ -82,6 +82,13 @@ export function RegisterScreen({ onBack, onSuccess, onLogin }: RegisterScreenPro
     }
   };
 
+  const generateCode = () => {
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedCode(code);
+    console.log(`📧 Código de verificación enviado a ${formData.email}: ${code}`);
+    return code;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateStep2()) return;
@@ -92,6 +99,8 @@ export function RegisterScreen({ onBack, onSuccess, onLogin }: RegisterScreenPro
     try {
       const success = await register(formData);
       if (success) {
+        generateCode();
+        setResendCooldown(60);
         setShowVerificationScreen(true);
       }
     } catch (err: any) {
@@ -105,7 +114,76 @@ export function RegisterScreen({ onBack, onSuccess, onLogin }: RegisterScreenPro
     }
   };
 
-  if (showVerificationScreen) {
+  const handleCodeChange = (index: number, value: string) => {
+    if (value.length > 1) value = value.slice(-1);
+    if (value && !/^\d$/.test(value)) return;
+    
+    const newCode = [...verificationCode];
+    newCode[index] = value;
+    setVerificationCode(newCode);
+    setVerifyError('');
+    
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+    
+    // Auto-verify when all 6 digits entered
+    if (value && index === 5) {
+      const fullCode = newCode.join('');
+      if (fullCode.length === 6) {
+        handleVerify(fullCode);
+      }
+    }
+  };
+
+  const handleCodeKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !verificationCode[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleCodePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    if (pasted.length === 6) {
+      const newCode = pasted.split('');
+      setVerificationCode(newCode);
+      inputRefs.current[5]?.focus();
+      handleVerify(pasted);
+    }
+  };
+
+  const handleVerify = async (code: string) => {
+    setIsVerifying(true);
+    setVerifyError('');
+    
+    // Simulate verification delay
+    await new Promise(resolve => setTimeout(resolve, 1200));
+    
+    if (code === generatedCode) {
+      // Auto-login
+      try {
+        await login(formData.email, formData.password);
+        onSuccess();
+      } catch {
+        onSuccess();
+      }
+    } else {
+      setVerifyError('Código incorrecto. Intentá de nuevo.');
+      setVerificationCode(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+    }
+    setIsVerifying(false);
+  };
+
+  const handleResendCode = () => {
+    if (resendCooldown > 0) return;
+    generateCode();
+    setResendCooldown(60);
+    setVerificationCode(['', '', '', '', '', '']);
+    setVerifyError('');
+    inputRefs.current[0]?.focus();
+  };
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center px-6 relative">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
