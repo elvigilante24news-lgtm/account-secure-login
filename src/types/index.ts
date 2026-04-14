@@ -190,10 +190,12 @@ export interface AppState {
   participaciones: Participacion[];
   participarEnSorteo: (sorteoId: string) => Promise<boolean>;
   verificarParticipacion: (sorteoId: string) => boolean;
+  cargarParticipaciones: () => void;
   
   // Notificaciones
   notificaciones: Notificacion[];
   marcarNotificacionLeida: (id: string) => void;
+  cargarNotificaciones: () => void;
   
   // Admin
   esAdmin: boolean;
@@ -222,6 +224,7 @@ export interface AppState {
   
   // Predicciones
   predicciones: Prediccion[];
+  cargarPredicciones: () => void;
   realizarPrediccion: (partidoId: string, sorteoId: string, golesLocal: number, golesVisitante: number) => Promise<Prediccion | null>;
   verificarPrediccion: (partidoId: string) => Prediccion | undefined;
   obtenerPrediccionesPorPartido: (partidoId: string) => Prediccion[];
