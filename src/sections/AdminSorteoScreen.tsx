@@ -347,7 +347,10 @@ export function AdminSorteoScreen({ sorteo, onBack, onEditarSorteo }: AdminSorte
     }
   };
 
-  const ganadoresNotificados = sorteoGanadores.filter(g => 
+  const titulares = sorteoGanadores.filter(g => g.tipo === 'titular');
+  const suplentes = sorteoGanadores.filter(g => g.tipo === 'suplente');
+
+  const ganadoresNotificados = titulares.filter(g => 
     notificacionesEnviadas.has(g.id) || g.notificado
   ).length;
 
@@ -475,33 +478,38 @@ export function AdminSorteoScreen({ sorteo, onBack, onEditarSorteo }: AdminSorte
               <p className="text-pollo-marron/60">Sorteo realizado exitosamente</p>
             </div>
 
-            {/* Estado de notificaciones */}
-            <div className={`mb-6 p-4 rounded-2xl ${ganadoresNotificados === sorteoGanadores.length ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
+            {/* Estado de notificaciones - solo titulares */}
+            <div className={`mb-6 p-4 rounded-2xl ${ganadoresNotificados === titulares.length ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-200'}`}>
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${ganadoresNotificados === sorteoGanadores.length ? 'bg-green-500' : 'bg-yellow-500'}`}>
-                  {ganadoresNotificados === sorteoGanadores.length ? (
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${ganadoresNotificados === titulares.length ? 'bg-green-500' : 'bg-yellow-500'}`}>
+                  {ganadoresNotificados === titulares.length ? (
                     <Check className="w-5 h-5 text-white" />
                   ) : (
                     <Send className="w-5 h-5 text-white" />
                   )}
                 </div>
                 <div>
-                  <p className={`font-bold ${ganadoresNotificados === sorteoGanadores.length ? 'text-green-700' : 'text-yellow-700'}`}>
-                    {ganadoresNotificados === sorteoGanadores.length 
-                      ? 'Todos los ganadores fueron notificados ' 
-                      : `Contactados: ${ganadoresNotificados} de ${sorteoGanadores.length}`}
+                  <p className={`font-bold ${ganadoresNotificados === titulares.length ? 'text-green-700' : 'text-yellow-700'}`}>
+                    {ganadoresNotificados === titulares.length 
+                      ? 'Todos los titulares fueron contactados' 
+                      : `Contactados: ${ganadoresNotificados} de ${titulares.length} titulares`}
                   </p>
-                  <p className={`text-sm ${ganadoresNotificados === sorteoGanadores.length ? 'text-green-600' : 'text-yellow-600'}`}>
-                    {ganadoresNotificados === sorteoGanadores.length 
+                  <p className={`text-sm ${ganadoresNotificados === titulares.length ? 'text-green-600' : 'text-yellow-600'}`}>
+                    {ganadoresNotificados === titulares.length 
                       ? 'Excelente trabajo' 
-                      : 'Usá los botones de contacto para notificar a cada ganador'}
+                      : 'Usá los botones de WhatsApp o Email para contactar a cada ganador titular'}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              {sorteoGanadores.map((ganador) => (
+            {/* TITULARES */}
+            <h3 className="text-lg font-black text-pollo-marron mb-3 flex items-center gap-2">
+              <Crown className="w-5 h-5 text-yellow-600" />
+              Ganadores Titulares
+            </h3>
+            <div className="space-y-4 mb-8">
+              {titulares.map((ganador) => (
                 <div 
                   key={ganador.id}
                   className="card-premium relative overflow-hidden animate-slide-up"
@@ -509,7 +517,6 @@ export function AdminSorteoScreen({ sorteo, onBack, onEditarSorteo }: AdminSorte
                 >
                   <div className={`absolute top-0 left-0 w-full h-1.5 ${getPositionColor(ganador.puesto)}`} />
                   
-                  {/* Badge de notificado */}
                   {(notificacionesEnviadas.has(ganador.id) || ganador.notificado) && (
                     <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
                       <Check className="w-3 h-3" />
@@ -548,7 +555,7 @@ export function AdminSorteoScreen({ sorteo, onBack, onEditarSorteo }: AdminSorte
                     <p className="text-sm text-pollo-marron font-semibold">{ganador.premio.valor}</p>
                   </div>
 
-                  {/* Botones de contacto */}
+                  {/* Botones de contacto manual - SOLO para titulares */}
                   <div className="mt-4 grid grid-cols-2 gap-3">
                     <button
                       onClick={() => handleEnviarWhatsApp(ganador)}
@@ -569,6 +576,51 @@ export function AdminSorteoScreen({ sorteo, onBack, onEditarSorteo }: AdminSorte
                 </div>
               ))}
             </div>
+
+            {/* SUPLENTES */}
+            {suplentes.length > 0 && (
+              <>
+                <h3 className="text-lg font-black text-pollo-marron mb-3 flex items-center gap-2">
+                  <Users className="w-5 h-5 text-pollo-marron/60" />
+                  Suplentes
+                </h3>
+                <p className="text-sm text-pollo-marron/50 mb-3">
+                  Los suplentes reemplazan a los titulares en caso de que alguno no pueda recibir su premio. No se les envía notificación automática.
+                </p>
+                <div className="space-y-3 mb-6">
+                  {suplentes.map((suplente) => (
+                    <div 
+                      key={suplente.id}
+                      className="bg-white/60 border border-pollo-marron/10 rounded-2xl p-4 animate-slide-up"
+                      style={{ animationDelay: `${(titulares.length + suplente.puesto) * 200}ms` }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-pollo-marron/10 rounded-xl flex items-center justify-center">
+                          <span className="text-lg font-bold text-pollo-marron/50">S{suplente.puesto}</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs font-bold text-pollo-marron/40 uppercase">Suplente {suplente.puesto}°</p>
+                          <h4 className="font-bold text-pollo-marron">
+                            {suplente.usuario.nombre} {suplente.usuario.apellido}
+                          </h4>
+                          <div className="flex items-center gap-2 text-sm text-pollo-marron/50">
+                            <Mail className="w-3 h-3" />
+                            {suplente.usuario.email}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm text-pollo-marron/50">
+                            <Phone className="w-3 h-3" />
+                            {suplente.usuario.telefono || 'Sin teléfono'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 pt-3 border-t border-pollo-marron/5">
+                        <p className="text-xs text-pollo-marron/40">Reemplaza al titular del puesto {suplente.puesto}° — Premio: {suplente.premio.nombre}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
 
             <button
               onClick={onBack}
