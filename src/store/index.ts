@@ -590,9 +590,6 @@ export const useStore = create<AppState>()((set, get) => ({
   },
 
   // ==================== MUNDIAL 2026 ====================
-  cargarPartidos: async () => {
-    // Already called from login - implemented above
-  },
 
   seleccionarPartido: (partido) => set({ partidoActivo: partido }),
 
