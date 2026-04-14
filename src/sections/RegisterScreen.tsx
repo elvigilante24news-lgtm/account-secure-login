@@ -99,9 +99,14 @@ export function RegisterScreen({ onBack, onSuccess, onLogin }: RegisterScreenPro
     try {
       const success = await register(formData);
       if (success) {
-        generateCode();
-        setResendCooldown(60);
-        setShowVerificationScreen(true);
+        // With Supabase auto-confirm, user is immediately registered
+        // Auto-login after registration
+        try {
+          await login(formData.email, formData.password);
+          onSuccess();
+        } catch {
+          onSuccess();
+        }
       }
     } catch (err: any) {
       const msg = err?.message || 'Error al registrar. Intenta de nuevo.';
