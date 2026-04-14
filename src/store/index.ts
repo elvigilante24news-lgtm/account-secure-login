@@ -118,19 +118,14 @@ const ganadoresEjemplo: Ganador[] = [
     userId: 'user-1',
     sorteoId: 'sorteo-prueba-1',
     puesto: 1,
+    tipo: 'titular',
     premio: { id: 'pr1', puesto: 1, nombre: 'Voucher $100.000', descripcion: 'Voucher de compra en Hiper del Pollo', imagen: '', valor: '$100.000' },
     fechaGanado: '2025-01-15T10:30:00Z',
     notificado: true,
     usuario: {
-      id: 'user-1',
-      nombre: 'María',
-      apellido: 'González',
-      email: 'maria.gonzalez@email.com',
-      telefono: '+54 9 11 2345-6789',
-      dni: '28.456.789',
-      fechaNacimiento: '1985-03-15',
-      ciudad: 'Buenos Aires',
-      createdAt: '2025-01-10'
+      id: 'user-1', nombre: 'María', apellido: 'González',
+      email: 'maria.gonzalez@email.com', telefono: '+54 9 11 2345-6789',
+      dni: '28.456.789', fechaNacimiento: '1985-03-15', ciudad: 'Buenos Aires', createdAt: '2025-01-10'
     }
   },
   {
@@ -138,19 +133,14 @@ const ganadoresEjemplo: Ganador[] = [
     userId: 'user-2',
     sorteoId: 'sorteo-prueba-1',
     puesto: 2,
+    tipo: 'titular',
     premio: { id: 'pr2', puesto: 2, nombre: 'Voucher $75.000', descripcion: 'Voucher de compra', imagen: '', valor: '$75.000' },
     fechaGanado: '2025-01-15T10:30:00Z',
     notificado: true,
     usuario: {
-      id: 'user-2',
-      nombre: 'Carlos',
-      apellido: 'Rodríguez',
-      email: 'carlos.rodriguez@email.com',
-      telefono: '+54 9 11 3456-7890',
-      dni: '31.234.567',
-      fechaNacimiento: '1990-07-22',
-      ciudad: 'Córdoba',
-      createdAt: '2025-01-12'
+      id: 'user-2', nombre: 'Carlos', apellido: 'Rodríguez',
+      email: 'carlos.rodriguez@email.com', telefono: '+54 9 11 3456-7890',
+      dni: '31.234.567', fechaNacimiento: '1990-07-22', ciudad: 'Córdoba', createdAt: '2025-01-12'
     }
   },
   {
@@ -158,19 +148,14 @@ const ganadoresEjemplo: Ganador[] = [
     userId: 'user-3',
     sorteoId: 'sorteo-prueba-1',
     puesto: 3,
+    tipo: 'titular',
     premio: { id: 'pr3', puesto: 3, nombre: 'Voucher $50.000', descripcion: 'Voucher de compra', imagen: '', valor: '$50.000' },
     fechaGanado: '2025-01-15T10:30:00Z',
     notificado: true,
     usuario: {
-      id: 'user-3',
-      nombre: 'Lucía',
-      apellido: 'Martínez',
-      email: 'lucia.martinez@email.com',
-      telefono: '+54 9 11 4567-8901',
-      dni: '35.678.901',
-      fechaNacimiento: '1992-11-08',
-      ciudad: 'Rosario',
-      createdAt: '2025-01-14'
+      id: 'user-3', nombre: 'Lucía', apellido: 'Martínez',
+      email: 'lucia.martinez@email.com', telefono: '+54 9 11 4567-8901',
+      dni: '35.678.901', fechaNacimiento: '1992-11-08', ciudad: 'Rosario', createdAt: '2025-01-14'
     }
   }
 ];
@@ -532,8 +517,6 @@ export const useStore = create<AppState>()(
           const usuarioData = usuarios.find((u: any) => u.id === p.userId);
           const { password, ...usuario } = usuarioData || {};
           
-          // Para tipo 'cantidad', todos reciben el mismo premio (el primero)
-          // Para tipo 'posiciones', cada uno recibe el premio según su puesto
           const premio = sorteo.tipoSorteo === 'cantidad'
             ? sorteo.premios[0]
             : (sorteo.premios[index] || sorteo.premios[sorteo.premios.length - 1]);
@@ -543,24 +526,61 @@ export const useStore = create<AppState>()(
             userId: p.userId,
             sorteoId: sorteoId,
             puesto: index + 1,
+            tipo: 'titular' as const,
             premio: premio,
             fechaGanado: new Date().toISOString(),
-            notificado: true,
+            notificado: false,
             usuario: usuario || {
-              id: p.userId,
-              nombre: 'Usuario',
-              apellido: 'Desconocido',
-              email: 'unknown@email.com',
-              telefono: '',
-              dni: '',
-              fechaNacimiento: '',
-              ciudad: '',
-              createdAt: ''
+              id: p.userId, nombre: 'Usuario', apellido: 'Desconocido',
+              email: 'unknown@email.com', telefono: '', dni: '',
+              fechaNacimiento: '', ciudad: '', createdAt: ''
             }
           };
         });
         
-        // Crear notificaciones automáticas para los ganadores
+        // Seleccionar suplentes (participantes restantes no seleccionados como titulares)
+        const suplentesSeleccionados: Participacion[] = [];
+        const cantidadSuplentes = Math.min(
+          cantidadGanadores, // misma cantidad de suplentes que titulares
+          participantesSorteo.length - ganadoresSeleccionados.length // máximo disponible
+        );
+        
+        for (const p of mezclados) {
+          if (!userIdsSeleccionados.has(p.userId)) {
+            suplentesSeleccionados.push(p);
+            userIdsSeleccionados.add(p.userId);
+            if (suplentesSeleccionados.length >= cantidadSuplentes) break;
+          }
+        }
+        
+        const nuevosSuplentes: Ganador[] = suplentesSeleccionados.map((p, index) => {
+          const usuarioData = usuarios.find((u: any) => u.id === p.userId);
+          const { password, ...usuario } = usuarioData || {};
+          
+          const premio = sorteo.tipoSorteo === 'cantidad'
+            ? sorteo.premios[0]
+            : (sorteo.premios[index] || sorteo.premios[sorteo.premios.length - 1]);
+          
+          return {
+            id: `suplente-${Date.now()}-${index}`,
+            userId: p.userId,
+            sorteoId: sorteoId,
+            puesto: index + 1,
+            tipo: 'suplente' as const,
+            premio: premio,
+            fechaGanado: new Date().toISOString(),
+            notificado: false,
+            usuario: usuario || {
+              id: p.userId, nombre: 'Usuario', apellido: 'Desconocido',
+              email: 'unknown@email.com', telefono: '', dni: '',
+              fechaNacimiento: '', ciudad: '', createdAt: ''
+            }
+          };
+        });
+        
+        const todosGanadores = [...nuevosGanadores, ...nuevosSuplentes];
+        
+        // Solo crear notificaciones para TITULARES (no suplentes)
         const notificacionesGanadores: Notificacion[] = nuevosGanadores.map((ganador) => {
           const puestoTexto = sorteo.tipoSorteo === 'cantidad' 
             ? 'GANADOR' 
@@ -593,13 +613,13 @@ export const useStore = create<AppState>()(
         );
         
         set({
-          ganadores: [...get().ganadores, ...nuevosGanadores],
+          ganadores: [...get().ganadores, ...todosGanadores],
           participaciones: nuevasParticipaciones,
           sorteos: sorteosActualizados,
           notificaciones: [...notificacionesGanadores, ...get().notificaciones]
         });
         
-        return nuevosGanadores;
+        return todosGanadores;
       },
 
       // Nuevas acciones de administrador
