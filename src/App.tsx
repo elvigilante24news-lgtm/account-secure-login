@@ -25,6 +25,7 @@ import { PrediccionConfirmadaScreen } from '@/sections/PrediccionConfirmadaScree
 import { BottomNav } from '@/components/BottomNav';
 import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
 import { useStore } from '@/store';
+import { supabase } from '@/integrations/supabase/client';
 import type { Sorteo, Partido, Prediccion } from '@/types';
 import './App.css';
 
@@ -58,19 +59,84 @@ function App() {
   const [selectedPartido, setSelectedPartido] = useState<Partido | null>(null);
   const [prediccionConfirmada, setPrediccionConfirmada] = useState<Prediccion | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { isAuthenticated, esAdmin, logout } = useStore();
+  const { isAuthenticated, esAdmin, logout, cargarSorteos, cargarPartidos } = useStore();
 
-  // Simular tiempo de carga de la aplicacion
+  // Listen to Supabase auth state changes
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        // User just signed in - load profile and data
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+        const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', session.user.id);
+        const isAdmin = roles?.some(r => r.role === 'admin') || false;
+        
+        if (profile) {
+          useStore.setState({
+            user: {
+              id: profile.id,
+              nombre: profile.nombre || '',
+              apellido: profile.apellido || '',
+              email: session.user.email || '',
+              telefono: profile.telefono || '',
+              dni: profile.dni || '',
+              fechaNacimiento: profile.fecha_nacimiento || '',
+              ciudad: profile.ciudad || '',
+              createdAt: profile.created_at,
+            },
+            isAuthenticated: true,
+            esAdmin: isAdmin,
+          });
+        }
+      } else if (event === 'SIGNED_OUT') {
+        useStore.setState({
+          user: null,
+          isAuthenticated: false,
+          esAdmin: false,
+        });
+      }
+    });
+
+    // Check existing session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+        const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', session.user.id);
+        const isAdmin = roles?.some(r => r.role === 'admin') || false;
+        
+        if (profile) {
+          useStore.setState({
+            user: {
+              id: profile.id,
+              nombre: profile.nombre || '',
+              apellido: profile.apellido || '',
+              email: session.user.email || '',
+              telefono: profile.telefono || '',
+              dni: profile.dni || '',
+              fechaNacimiento: profile.fecha_nacimiento || '',
+              ciudad: profile.ciudad || '',
+              createdAt: profile.created_at,
+            },
+            isAuthenticated: true,
+            esAdmin: isAdmin,
+          });
+          setCurrentScreen('home');
+        }
+        // Load data
+        cargarSorteos();
+        cargarPartidos();
+        useStore.getState().cargarNotificaciones();
+        useStore.getState().cargarParticipaciones();
+        useStore.getState().cargarPredicciones();
+      }
       setIsLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  // Verificar si hay sesión iniciada al cargar
+  // Navigate to home when authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && ['welcome', 'login', 'register'].includes(currentScreen)) {
       setCurrentScreen('home');
     }
   }, [isAuthenticated]);
