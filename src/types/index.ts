@@ -100,6 +100,7 @@ export interface Ganador {
   fechaGanado: string;
   notificado: boolean;
   usuario: User;
+  tipo: 'titular' | 'suplente';
 }
 
 // ==================== TIPOS PARA MUNDIAL 2026 ====================
