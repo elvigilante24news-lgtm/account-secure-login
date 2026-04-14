@@ -347,7 +347,10 @@ export function AdminSorteoScreen({ sorteo, onBack, onEditarSorteo }: AdminSorte
     }
   };
 
-  const ganadoresNotificados = sorteoGanadores.filter(g => 
+  const titulares = sorteoGanadores.filter(g => g.tipo === 'titular');
+  const suplentes = sorteoGanadores.filter(g => g.tipo === 'suplente');
+
+  const ganadoresNotificados = titulares.filter(g => 
     notificacionesEnviadas.has(g.id) || g.notificado
   ).length;
 
