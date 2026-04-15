@@ -289,7 +289,7 @@ export const useStore = create<AppState>()((set, get) => ({
         userId: g.user_id,
         sorteoId: g.sorteo_id,
         puesto: g.puesto,
-        tipo: g.tipo,
+        tipo: g.tipo as 'titular' | 'suplente',
         premio,
         fechaGanado: g.fecha_ganado,
         notificado: g.notificado,
