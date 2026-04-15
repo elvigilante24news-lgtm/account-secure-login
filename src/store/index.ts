@@ -276,6 +276,32 @@ export const useStore = create<AppState>()((set, get) => ({
     if (data) set({ predicciones: data.map(mapPrediccion) });
   },
 
+  cargarGanadores: async () => {
+    const { data } = await supabase.from('ganadores').select('*, premios(*)');
+    if (!data) return;
+    
+    const ganadores: Ganador[] = [];
+    for (const g of data) {
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', g.user_id).single();
+      const premio = g.premios ? mapPremio(g.premios) : { id: g.premio_id, puesto: g.puesto, nombre: '', descripcion: '', imagen: '', valor: '' };
+      ganadores.push({
+        id: g.id,
+        userId: g.user_id,
+        sorteoId: g.sorteo_id,
+        puesto: g.puesto,
+        tipo: g.tipo,
+        premio,
+        fechaGanado: g.fecha_ganado,
+        notificado: g.notificado,
+        usuario: profile ? mapProfile(profile, '') : {
+          id: g.user_id, nombre: 'Usuario', apellido: 'Desconocido',
+          email: '', telefono: '', dni: '', fechaNacimiento: '', ciudad: '', createdAt: '',
+        },
+      });
+    }
+    set({ ganadores });
+  },
+
   seleccionarSorteo: (sorteo) => set({ sorteoActivo: sorteo }),
 
   participarEnSorteo: async (sorteoId: string) => {
