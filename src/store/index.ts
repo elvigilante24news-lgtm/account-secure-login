@@ -164,6 +164,7 @@ export const useStore = create<AppState>()((set, get) => ({
     get().cargarNotificaciones();
     get().cargarParticipaciones();
     get().cargarPredicciones();
+    get().cargarGanadores();
 
     return true;
   },
