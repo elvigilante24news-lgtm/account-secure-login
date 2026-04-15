@@ -328,13 +328,12 @@ export const useStore = create<AppState>()((set, get) => ({
   },
 
   // ==================== ADMIN: SORTEO ====================
-  realizarSorteo: (sorteoId: string) => {
-    // This is complex - for now we do it client-side with DB data
+  realizarSorteo: async (sorteoId: string) => {
     const { participaciones, sorteos } = get();
     const participantesSorteo = participaciones.filter(p => p.sorteoId === sorteoId);
     const sorteo = sorteos.find(s => s.id === sorteoId);
 
-    if (!sorteo || participantesSorteo.length < 3) return [];
+    if (!sorteo || participantesSorteo.length < 1) return [];
 
     let participacionesPonderadas: Participacion[] = [];
     participantesSorteo.forEach(p => {
@@ -357,115 +356,113 @@ export const useStore = create<AppState>()((set, get) => ({
       }
     }
 
-    // We need to save ganadores to DB - this will be done async
     const nuevosGanadores: Ganador[] = [];
-    
-    const saveGanadores = async () => {
-      for (let i = 0; i < ganadoresSeleccionados.length; i++) {
-        const p = ganadoresSeleccionados[i];
-        const premio = sorteo.tipoSorteo === 'cantidad'
-          ? sorteo.premios[0]
-          : (sorteo.premios[i] || sorteo.premios[sorteo.premios.length - 1]);
 
-        // Get user profile
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', p.userId).single();
-        const { data: authUser } = await supabase.auth.admin?.getUserById?.(p.userId) || { data: null };
+    for (let i = 0; i < ganadoresSeleccionados.length; i++) {
+      const p = ganadoresSeleccionados[i];
+      const premio = sorteo.tipoSorteo === 'cantidad'
+        ? sorteo.premios[0]
+        : (sorteo.premios[i] || sorteo.premios[sorteo.premios.length - 1]);
 
-        const { data: ganadorRow } = await supabase.from('ganadores').insert({
-          user_id: p.userId,
-          sorteo_id: sorteoId,
+      // Get user profile
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', p.userId).single();
+
+      // Get user email from auth - use profiles table email if available, otherwise leave empty
+      let userEmail = '';
+
+      const { data: ganadorRow } = await supabase.from('ganadores').insert({
+        user_id: p.userId,
+        sorteo_id: sorteoId,
+        puesto: i + 1,
+        premio_id: premio.id,
+        tipo: 'titular',
+        notificado: false,
+      }).select().single();
+
+      if (ganadorRow) {
+        nuevosGanadores.push({
+          id: ganadorRow.id,
+          userId: p.userId,
+          sorteoId: sorteoId,
           puesto: i + 1,
-          premio_id: premio.id,
           tipo: 'titular',
+          premio,
+          fechaGanado: ganadorRow.fecha_ganado,
           notificado: false,
-        }).select().single();
+          usuario: profile ? mapProfile(profile, userEmail) : {
+            id: p.userId, nombre: 'Usuario', apellido: 'Desconocido',
+            email: '', telefono: '', dni: '', fechaNacimiento: '', ciudad: '', createdAt: '',
+          },
+        });
 
-        if (ganadorRow) {
-          nuevosGanadores.push({
-            id: ganadorRow.id,
-            userId: p.userId,
-            sorteoId: sorteoId,
-            puesto: i + 1,
-            tipo: 'titular',
-            premio,
-            fechaGanado: ganadorRow.fecha_ganado,
-            notificado: false,
-            usuario: profile ? mapProfile(profile, '') : {
-              id: p.userId, nombre: 'Usuario', apellido: 'Desconocido',
-              email: '', telefono: '', dni: '', fechaNacimiento: '', ciudad: '', createdAt: '',
-            },
-          });
-
-          // Notify titular
-          await supabase.from('notificaciones').insert({
-            user_id: p.userId,
-            tipo: 'ganador',
-            titulo: '¡FELICITACIONES! ¡GANASTE! 🎉',
-            mensaje: `¡Sos el ${sorteo.tipoSorteo === 'cantidad' ? 'GANADOR' : `${i + 1}° PUESTO`} del sorteo "${sorteo.titulo}"! Ganaste: ${premio.nombre} (${premio.valor}). ¡Te contactaremos pronto!`,
-            sorteo_id: sorteoId,
-          });
-        }
-
-        // Update participacion
-        await supabase.from('participaciones').update({ estado: 'ganador', puesto: i + 1 }).eq('id', p.id);
-      }
-
-      // Select suplentes
-      const cantidadSuplentes = Math.min(cantidadGanadores, participantesSorteo.length - ganadoresSeleccionados.length);
-      const suplentesSeleccionados: Participacion[] = [];
-      for (const p of mezclados) {
-        if (!userIdsSeleccionados.has(p.userId)) {
-          suplentesSeleccionados.push(p);
-          userIdsSeleccionados.add(p.userId);
-          if (suplentesSeleccionados.length >= cantidadSuplentes) break;
-        }
-      }
-
-      for (let i = 0; i < suplentesSeleccionados.length; i++) {
-        const p = suplentesSeleccionados[i];
-        const premio = sorteo.tipoSorteo === 'cantidad'
-          ? sorteo.premios[0]
-          : (sorteo.premios[i] || sorteo.premios[sorteo.premios.length - 1]);
-
-        const { data: profile } = await supabase.from('profiles').select('*').eq('id', p.userId).single();
-
-        const { data: ganadorRow } = await supabase.from('ganadores').insert({
+        // Notify titular only
+        await supabase.from('notificaciones').insert({
           user_id: p.userId,
+          tipo: 'ganador',
+          titulo: '¡FELICITACIONES! ¡GANASTE! 🎉',
+          mensaje: `¡Sos el ${sorteo.tipoSorteo === 'cantidad' ? 'GANADOR' : `${i + 1}° PUESTO`} del sorteo "${sorteo.titulo}"! Ganaste: ${premio.nombre} (${premio.valor}). ¡Te contactaremos pronto!`,
           sorteo_id: sorteoId,
-          puesto: i + 1,
-          premio_id: premio.id,
-          tipo: 'suplente',
-          notificado: false,
-        }).select().single();
-
-        if (ganadorRow) {
-          nuevosGanadores.push({
-            id: ganadorRow.id,
-            userId: p.userId,
-            sorteoId: sorteoId,
-            puesto: i + 1,
-            tipo: 'suplente',
-            premio,
-            fechaGanado: ganadorRow.fecha_ganado,
-            notificado: false,
-            usuario: profile ? mapProfile(profile, '') : {
-              id: p.userId, nombre: 'Usuario', apellido: 'Desconocido',
-              email: '', telefono: '', dni: '', fechaNacimiento: '', ciudad: '', createdAt: '',
-            },
-          });
-        }
+        });
       }
 
-      // Mark sorteo as finalizado
-      await supabase.from('sorteos').update({ estado: 'finalizado' }).eq('id', sorteoId);
+      // Update participacion
+      await supabase.from('participaciones').update({ estado: 'ganador', puesto: i + 1 }).eq('id', p.id);
+    }
 
-      set({ ganadores: [...get().ganadores, ...nuevosGanadores] });
-      get().cargarSorteos();
-      get().cargarParticipaciones();
-      get().cargarNotificaciones();
-    };
+    // Select suplentes
+    const cantidadSuplentes = Math.min(cantidadGanadores, participantesSorteo.length - ganadoresSeleccionados.length);
+    const suplentesSeleccionados: Participacion[] = [];
+    for (const p of mezclados) {
+      if (!userIdsSeleccionados.has(p.userId)) {
+        suplentesSeleccionados.push(p);
+        userIdsSeleccionados.add(p.userId);
+        if (suplentesSeleccionados.length >= cantidadSuplentes) break;
+      }
+    }
 
-    saveGanadores();
+    for (let i = 0; i < suplentesSeleccionados.length; i++) {
+      const p = suplentesSeleccionados[i];
+      const premio = sorteo.tipoSorteo === 'cantidad'
+        ? sorteo.premios[0]
+        : (sorteo.premios[i] || sorteo.premios[sorteo.premios.length - 1]);
+
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', p.userId).single();
+
+      const { data: ganadorRow } = await supabase.from('ganadores').insert({
+        user_id: p.userId,
+        sorteo_id: sorteoId,
+        puesto: i + 1,
+        premio_id: premio.id,
+        tipo: 'suplente',
+        notificado: false,
+      }).select().single();
+
+      if (ganadorRow) {
+        nuevosGanadores.push({
+          id: ganadorRow.id,
+          userId: p.userId,
+          sorteoId: sorteoId,
+          puesto: i + 1,
+          tipo: 'suplente',
+          premio,
+          fechaGanado: ganadorRow.fecha_ganado,
+          notificado: false,
+          usuario: profile ? mapProfile(profile, '') : {
+            id: p.userId, nombre: 'Usuario', apellido: 'Desconocido',
+            email: '', telefono: '', dni: '', fechaNacimiento: '', ciudad: '', createdAt: '',
+          },
+        });
+      }
+    }
+
+    // Mark sorteo as finalizado
+    await supabase.from('sorteos').update({ estado: 'finalizado' }).eq('id', sorteoId);
+
+    set({ ganadores: [...get().ganadores, ...nuevosGanadores] });
+    await get().cargarSorteos();
+    await get().cargarParticipaciones();
+    await get().cargarNotificaciones();
+
     return nuevosGanadores;
   },
 
