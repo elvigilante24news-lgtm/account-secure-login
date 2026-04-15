@@ -199,8 +199,9 @@ export interface AppState {
   
   // Admin
   esAdmin: boolean;
-  realizarSorteo: (sorteoId: string) => Ganador[];
+  realizarSorteo: (sorteoId: string) => Promise<Ganador[]>;
   ganadores: Ganador[];
+  cargarGanadores: () => void;
   
   // Nuevas acciones de administrador
   crearSorteo: (sorteoData: Omit<Sorteo, 'id' | 'creadoPor' | 'fechaCreacion' | 'participantes'>) => Sorteo;

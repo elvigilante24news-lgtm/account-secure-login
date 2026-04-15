@@ -240,7 +240,7 @@ export function AdminSorteoScreen({ sorteo, onBack, onEditarSorteo }: AdminSorte
     // Simular animación de sorteo (3 segundos)
     await new Promise(resolve => setTimeout(resolve, 3000));
     
-    const nuevosGanadores = realizarSorteo(sorteo.id);
+    const nuevosGanadores = await realizarSorteo(sorteo.id);
     setSorteoGanadores(nuevosGanadores);
     setIsSorting(false);
     setShowResults(true);
