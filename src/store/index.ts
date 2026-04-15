@@ -253,7 +253,19 @@ export const useStore = create<AppState>()((set, get) => ({
   cargarParticipaciones: async () => {
     const { data: user } = await supabase.auth.getUser();
     if (!user.user) return;
-    const { data } = await supabase.from('participaciones').select('*').eq('user_id', user.user.id);
+    
+    // Admin loads ALL participaciones, users load only their own
+    const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', user.user.id);
+    const isAdmin = roles?.some(r => r.role === 'admin') || false;
+    
+    let data;
+    if (isAdmin) {
+      const res = await supabase.from('participaciones').select('*');
+      data = res.data;
+    } else {
+      const res = await supabase.from('participaciones').select('*').eq('user_id', user.user.id);
+      data = res.data;
+    }
     if (data) set({ participaciones: data.map(mapParticipacion) });
   },
 
