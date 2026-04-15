@@ -199,7 +199,7 @@ export interface AppState {
   
   // Admin
   esAdmin: boolean;
-  realizarSorteo: (sorteoId: string) => Ganador[];
+  realizarSorteo: (sorteoId: string) => Promise<Ganador[]>;
   ganadores: Ganador[];
   
   // Nuevas acciones de administrador
