@@ -127,6 +127,7 @@ function App() {
         useStore.getState().cargarNotificaciones();
         useStore.getState().cargarParticipaciones();
         useStore.getState().cargarPredicciones();
+        useStore.getState().cargarGanadores();
       }
       setIsLoading(false);
     });
