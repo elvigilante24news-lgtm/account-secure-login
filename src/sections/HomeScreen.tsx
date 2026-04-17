@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Gift, Ticket, Bell, ChevronRight, Trophy, Calendar, Users, Globe, TrendingUp, Target } from 'lucide-react';
 import { useStore } from '@/store';
 import type { Sorteo } from '@/types';
+import mundialBg from '@/assets/mundial-2026-bg.png';
 
 interface HomeScreenProps {
   onNavigate: (screen: string, params?: any) => void;
@@ -87,29 +88,37 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
         {prediccionesHabilitadas && (
           <div 
             onClick={() => onNavigate('partidos-mundial')}
-            className="relative overflow-hidden rounded-2xl cursor-pointer group bg-pollo-azul-claro border border-pollo-azul/30 shadow-soft"
+            className="relative overflow-hidden rounded-2xl cursor-pointer group border border-pollo-azul/30 shadow-soft"
+            style={{
+              backgroundImage: `url(${mundialBg})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+            }}
           >
+            {/* Overlay para legibilidad */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/55 to-black/30" />
+
             <div className="relative p-5 shadow-md">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <Globe className="w-4 h-4 text-pollo-azul" />
-                    <span className="text-pollo-azul text-xs font-bold uppercase tracking-wider">Mundial 2026</span>
+                    <Globe className="w-4 h-4 text-white" />
+                    <span className="text-white text-xs font-bold uppercase tracking-wider drop-shadow-md">Mundial 2026</span>
                   </div>
-                  <h2 className="text-xl font-black text-pollo-marron mb-2">
+                  <h2 className="text-xl font-black text-white mb-2 drop-shadow-lg">
                     Predicciones con<br/>Triple Chance
                   </h2>
-                  <p className="text-pollo-marron/70 text-sm mb-3">
+                  <p className="text-white/90 text-sm mb-3 drop-shadow-md">
                     Predecí los resultados y ganá <strong>3x chances</strong> si acertás
                   </p>
                   <div className="flex items-center gap-2">
                     <span className="bg-pollo-azul text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md">
                       Predecir Ahora
                     </span>
-                    <ChevronRight className="w-4 h-4 text-pollo-marron/60" />
+                    <ChevronRight className="w-4 h-4 text-white/80" />
                   </div>
                 </div>
-                <div className="w-16 h-16 bg-pollo-azul rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                <div className="w-16 h-16 bg-pollo-azul/90 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
                   <img src="/trophy-icon.png" alt="Trophy" className="w-10 h-10" />
                 </div>
               </div>
